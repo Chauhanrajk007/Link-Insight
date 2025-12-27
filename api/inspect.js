@@ -1,66 +1,73 @@
 export default async function handler(req, res) {
-  try {
-    const url = req.query.url;
-    if (!url) {
-      return res.status(400).json({ error: "URL required" });
-    }
-
-    let insights = [];
-    let warnings = [];
-
-    // HEAD request (lightweight)
-    const headRes = await fetch(url, { method: "HEAD", redirect: "manual" });
-
-    // Redirect detection
-    if (headRes.status >= 300 && headRes.status < 400) {
-      warnings.push("This link redirects to another page");
-    }
-
-    // Content type
-    const contentType = headRes.headers.get("content-type") || "";
-
-    if (contentType.includes("application/pdf")) {
-      insights.push("Opens a PDF document");
-    } else if (contentType.includes("application/zip")) {
-      warnings.push("Triggers a file download");
-    } else if (contentType.includes("text/html")) {
-      insights.push("Opens a normal web page");
-    }
-
-    // Fetch small HTML sample (safe)
-    let html = "";
-    if (contentType.includes("text/html")) {
-      const pageRes = await fetch(url);
-      html = (await pageRes.text()).slice(0, 5000);
-    }
-
-    // Detect forms
-    if (html.includes("<form")) {
-      warnings.push("Contains a form (may collect user input)");
-    }
-
-    if (html.includes("type=\"password\"")) {
-      warnings.push("Contains a password field (login page)");
-    }
-
-    // HTTPS
-    if (url.startsWith("https://")) {
-      insights.push("Uses secure HTTPS connection");
-    } else {
-      warnings.push("Does not use HTTPS");
-    }
-
-    // Fallback
-    if (insights.length === 0 && warnings.length === 0) {
-      insights.push("No unusual behavior detected");
-    }
-
-    res.status(200).json({
-      insights,
-      warnings
-    });
-
-  } catch (err) {
-    res.status(500).json({ error: "Unable to inspect link" });
+  const url = req.query.url;
+  if (!url) {
+    return res.status(400).json({ error: "URL required" });
   }
+
+  let insights = [];
+  let warnings = [];
+  const lowerUrl = url.toLowerCase();
+
+  // ---------- HTTPS ----------
+  if (lowerUrl.startsWith("https://")) {
+    insights.push("Uses a secure HTTPS connection");
+  } else {
+    warnings.push("Does not use HTTPS");
+  }
+
+  // ---------- FILE TYPE ----------
+  if (lowerUrl.endsWith(".pdf")) {
+    insights.push("Opens a PDF document");
+  }
+
+  if (
+    lowerUrl.endsWith(".zip") ||
+    lowerUrl.endsWith(".exe") ||
+    lowerUrl.endsWith(".apk")
+  ) {
+    warnings.push("Triggers a file download");
+  }
+
+  // ---------- SHORTENER ----------
+  const shorteners = ["bit.ly", "tinyurl", "t.co", "goo.gl"];
+  if (shorteners.some(s => lowerUrl.includes(s))) {
+    warnings.push(
+      "Uses a link shortener, which hides the final destination and is commonly abused in scams"
+    );
+  }
+
+  // ---------- REDIRECT CHECK ----------
+  try {
+    const head = await fetch(url, { method: "HEAD", redirect: "manual" });
+    if (head.status >= 300 && head.status < 400) {
+      warnings.push(
+        "Redirects to another website, a technique often used in phishing and scam links"
+      );
+    }
+  } catch {
+    warnings.push(
+      "The destination blocks inspection, which is common for suspicious or protected links"
+    );
+  }
+
+  // ---------- SCAM LANGUAGE ----------
+  const scamWords = [
+    "login", "verify", "reward",
+    "bonus", "free", "claim", "account"
+  ];
+
+  if (scamWords.some(w => lowerUrl.includes(w))) {
+    warnings.push(
+      "Link contains language commonly used in phishing or scam messages"
+    );
+  }
+
+  if (insights.length === 0 && warnings.length === 0) {
+    insights.push("No obvious risky behavior detected");
+  }
+
+  return res.status(200).json({
+    insights,
+    warnings
+  });
 }
