@@ -1,72 +1,67 @@
-export default async function handler(req, res) {
+export default function handler(req, res) {
   const url = req.query.url;
   if (!url) {
     return res.status(400).json({ error: "URL required" });
   }
 
+  const u = url.toLowerCase();
   let insights = [];
   let warnings = [];
-  const lowerUrl = url.toLowerCase();
 
-  // ---------- HTTPS ----------
-  if (lowerUrl.startsWith("https://")) {
-    insights.push("Uses a secure HTTPS connection");
+  // HTTPS
+  if (u.startsWith("https://")) {
+    insights.push("Uses HTTPS encryption");
   } else {
     warnings.push("Does not use HTTPS");
   }
 
-  // ---------- FILE TYPE ----------
-  if (lowerUrl.endsWith(".pdf")) {
+  // File actions
+  if (u.endsWith(".pdf")) {
     insights.push("Opens a PDF document");
   }
 
+  if (u.endsWith(".zip") || u.endsWith(".exe") || u.endsWith(".apk")) {
+    insights.push("Triggers a file download");
+    warnings.push("Downloads are often used to deliver malware");
+  }
+
+  // Login / account intent
   if (
-    lowerUrl.endsWith(".zip") ||
-    lowerUrl.endsWith(".exe") ||
-    lowerUrl.endsWith(".apk")
+    u.includes("login") ||
+    u.includes("signin") ||
+    u.includes("verify") ||
+    u.includes("account")
   ) {
-    warnings.push("Triggers a file download");
+    insights.push("Likely leads to a login or account page");
+    warnings.push("Login pages are common phishing targets");
   }
 
-  // ---------- SHORTENER ----------
-  const shorteners = ["bit.ly", "tinyurl", "t.co", "goo.gl"];
-  if (shorteners.some(s => lowerUrl.includes(s))) {
-    warnings.push(
-      "Uses a link shortener, which hides the final destination and is commonly abused in scams"
-    );
+  // Gambling / money
+  if (
+    u.includes("bet") ||
+    u.includes("casino") ||
+    u.includes("bonus") ||
+    u.includes("reward")
+  ) {
+    insights.push("Related to betting or financial activity");
+    warnings.push("Financial links carry higher risk if untrusted");
   }
 
-  // ---------- REDIRECT CHECK ----------
-  try {
-    const head = await fetch(url, { method: "HEAD", redirect: "manual" });
-    if (head.status >= 300 && head.status < 400) {
-      warnings.push(
-        "Redirects to another website, a technique often used in phishing and scam links"
-      );
-    }
-  } catch {
-    warnings.push(
-      "The destination blocks inspection, which is common for suspicious or protected links"
-    );
+  // URL shorteners
+  if (
+    u.includes("bit.ly") ||
+    u.includes("tinyurl") ||
+    u.includes("t.co")
+  ) {
+    insights.push("Uses a URL shortener");
+    warnings.push("Shortened links hide the final destination");
   }
 
-  // ---------- SCAM LANGUAGE ----------
-  const scamWords = [
-    "login", "verify", "reward",
-    "bonus", "free", "claim", "account"
-  ];
-
-  if (scamWords.some(w => lowerUrl.includes(w))) {
-    warnings.push(
-      "Link contains language commonly used in phishing or scam messages"
-    );
+  if (insights.length === 0) {
+    insights.push("Appears to be a normal informational website");
   }
 
-  if (insights.length === 0 && warnings.length === 0) {
-    insights.push("No obvious risky behavior detected");
-  }
-
-  return res.status(200).json({
+  return res.json({
     insights,
     warnings
   });
