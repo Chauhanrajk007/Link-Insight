@@ -5,18 +5,20 @@ const overlay = document.getElementById("overlay");
 const result = document.getElementById("result");
 const closeBtn = document.getElementById("closePopup");
 
+// Ensure popup is hidden on load
 overlay.classList.add("hidden");
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const url = document.getElementById("urlInput").value.trim();
+
   if (!url.startsWith("http")) {
-    alert("Enter full URL including https://");
+    alert("Please enter the full URL including https://");
     return;
   }
 
-  btn.textContent = "Inspecting...";
+  btn.textContent = "Inspecting…";
   btn.disabled = true;
 
   try {
@@ -24,35 +26,51 @@ form.addEventListener("submit", async (e) => {
     const data = await res.json();
 
     if (data.error) {
-      alert("Unable to inspect link");
+      alert("Unable to inspect this link right now.");
       return;
     }
 
     result.innerHTML = `
-      <h2>What this link is likely to do</h2>
+      <h2>Link behavior analysis</h2>
 
-      ${data.insights.map(i => `<p>🔍 ${i}</p>`).join("")}
-      ${data.warnings.map(w => `<p>⚠ ${w}</p>`).join("")}
+      <div class="section">
+        ${data.insights.map(i =>
+          `<div class="insight">🔍 ${i}</div>`
+        ).join("")}
+      </div>
 
-      <p style="font-size:12px;color:#666;margin-top:12px">
-        This tool explains link intent, not overall website trust.
-      </p>
+      ${
+        data.warnings.length
+          ? `<div class="section">
+              ${data.warnings.map(w =>
+                `<div class="warning">⚠ ${w}</div>`
+              ).join("")}
+            </div>`
+          : ""
+      }
+
+      <div class="footnote">
+        This analysis is based on link structure and common web behavior patterns.
+        It does not guarantee safety.
+      </div>
     `;
 
     overlay.classList.remove("hidden");
 
   } catch {
-    alert("Error inspecting link");
+    alert("Error inspecting link. Please try again.");
   }
 
   btn.textContent = "Inspect";
   btn.disabled = false;
 });
 
+// Close popup
 closeBtn.addEventListener("click", () => {
   overlay.classList.add("hidden");
 });
 
+// Close when clicking outside popup
 overlay.addEventListener("click", (e) => {
   if (e.target === overlay) {
     overlay.classList.add("hidden");
