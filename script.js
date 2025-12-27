@@ -5,20 +5,19 @@ const overlay = document.getElementById("overlay");
 const result = document.getElementById("result");
 const closeBtn = document.getElementById("closePopup");
 
-// Ensure popup is hidden on load
+// Hide popup on load
 overlay.classList.add("hidden");
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const url = document.getElementById("urlInput").value.trim();
-
   if (!url.startsWith("http")) {
-    alert("Please enter the full URL including https://");
+    alert("Enter the full URL (https://...)");
     return;
   }
 
-  btn.textContent = "Inspecting…";
+  btn.textContent = "Checking…";
   btn.disabled = true;
 
   try {
@@ -26,42 +25,42 @@ form.addEventListener("submit", async (e) => {
     const data = await res.json();
 
     if (data.error) {
-      alert("Unable to inspect this link right now.");
+      alert("Could not analyze this link");
       return;
     }
 
+    // ---- RENDER MINIMAL RESULT ----
     result.innerHTML = `
-      <h2>Link behavior analysis</h2>
+      <h2>Link check result</h2>
 
-      <div class="section">
-        ${data.insights.map(i =>
-          `<div class="insight">🔍 ${i}</div>`
-        ).join("")}
+      <div class="block">
+        <strong>What happens if you click:</strong>
+        <ul>
+          ${data.insights.map(i => `<li>${i}</li>`).join("")}
+        </ul>
       </div>
 
       ${
         data.warnings.length
-          ? `<div class="section">
-              ${data.warnings.map(w =>
-                `<div class="warning">⚠ ${w}</div>`
-              ).join("")}
+          ? `<div class="block warn">
+              <strong>Things to be careful about:</strong>
+              <ul>
+                ${data.warnings.map(w => `<li>${w}</li>`).join("")}
+              </ul>
             </div>`
-          : ""
+          : `<div class="block ok">
+              No common risk patterns were detected in this link.
+            </div>`
       }
-
-      <div class="footnote">
-        This analysis is based on link structure and common web behavior patterns.
-        It does not guarantee safety.
-      </div>
     `;
 
     overlay.classList.remove("hidden");
 
   } catch {
-    alert("Error inspecting link. Please try again.");
+    alert("Something went wrong");
   }
 
-  btn.textContent = "Inspect";
+  btn.textContent = "Check";
   btn.disabled = false;
 });
 
@@ -70,9 +69,7 @@ closeBtn.addEventListener("click", () => {
   overlay.classList.add("hidden");
 });
 
-// Close when clicking outside popup
+// Click outside closes popup
 overlay.addEventListener("click", (e) => {
-  if (e.target === overlay) {
-    overlay.classList.add("hidden");
-  }
+  if (e.target === overlay) overlay.classList.add("hidden");
 });
