@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Link Insight Tool</title>
+  <meta name="description" content="Understand what a link does before clicking it." />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<header>
+  <h1>Link Insight</h1>
+  <p>Understand what a link does before you click it</p>
+</header>
+
+<main>
+  <form id="inspectForm">
+    <input
+      id="urlInput"
+      type="url"
+      placeholder="https://example.com"
+      required
+    />
+    <button id="inspectBtn" type="submit">Inspect</button>
+  </form>
+</main>
+
+<!-- MODAL -->
+<div id="overlay" class="hidden">
+  <div id="popup">
+    <button id="closePopup">×</button>
+    <div id="result"></div>
+  </div>
+</div>
+
+<footer>
+  <span>No tracking · No clicks · Just preview</span>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
