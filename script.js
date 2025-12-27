@@ -1,11 +1,6 @@
 const form = document.getElementById("inspectForm");
 const btn = document.getElementById("inspectBtn");
-const overlay = document.getElementById("overlay");
 const result = document.getElementById("result");
-const closeBtn = document.getElementById("closePopup");
-
-// Safety
-overlay.classList.add("hidden");
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -16,45 +11,32 @@ form.addEventListener("submit", async (e) => {
     return;
   }
 
-  btn.textContent = "Inspecting…";
-  btn.classList.add("loading");
+  btn.textContent = "Inspecting...";
   btn.disabled = true;
 
   try {
     const res = await fetch(`/api/inspect?url=${encodeURIComponent(url)}`);
     const data = await res.json();
 
+    if (data.error) {
+      alert("Unable to inspect link");
+      return;
+    }
+
     result.innerHTML = `
-      <h2>What this link does</h2>
+      <h2>Link insight</h2>
 
-      ${data.insights.map(x => `<div class="insight">✔ ${x}</div>`).join("")}
-      ${data.warnings.map(x => `<div class="warning">⚠ ${x}</div>`).join("")}
+      ${data.insights.map(i => `<div>🔍 ${i}</div>`).join("")}
+      ${data.warnings.map(w => `<div>⚠ ${w}</div>`).join("")}
 
-      <p style="margin-top:16px;font-size:13px;color:#64748b">
-        This preview is generated without clicking the link.
+      <p style="font-size:12px;color:#666;margin-top:10px">
+        This tool explains link behavior, not website trust.
       </p>
     `;
-
-    overlay.classList.remove("hidden");
-    document.body.classList.add("modal-open");
-
   } catch {
-    alert("Unable to inspect link");
+    alert("Error inspecting link");
   }
 
   btn.textContent = "Inspect";
-  btn.classList.remove("loading");
   btn.disabled = false;
-});
-
-closeBtn.addEventListener("click", () => {
-  overlay.classList.add("hidden");
-  document.body.classList.remove("modal-open");
-});
-
-overlay.addEventListener("click", (e) => {
-  if (e.target === overlay) {
-    overlay.classList.add("hidden");
-    document.body.classList.remove("modal-open");
-  }
 });
