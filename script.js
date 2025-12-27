@@ -2,11 +2,9 @@ const form = document.getElementById("inspectForm");
 const btn = document.getElementById("inspectBtn");
 
 const overlay = document.getElementById("overlay");
-const popup = document.getElementById("popup");
 const result = document.getElementById("result");
 const closeBtn = document.getElementById("closePopup");
 
-// NEVER show popup on load
 overlay.classList.add("hidden");
 
 form.addEventListener("submit", async (e) => {
@@ -31,17 +29,16 @@ form.addEventListener("submit", async (e) => {
     }
 
     result.innerHTML = `
-      <h2>Link insight</h2>
+      <h2>What this link is likely to do</h2>
 
-      ${data.insights.map(i => `<div>🔍 ${i}</div>`).join("")}
-      ${data.warnings.map(w => `<div>⚠ ${w}</div>`).join("")}
+      ${data.insights.map(i => `<p>🔍 ${i}</p>`).join("")}
+      ${data.warnings.map(w => `<p>⚠ ${w}</p>`).join("")}
 
-      <p style="font-size:12px;color:#666;margin-top:10px">
-        Explains what happens if you click the link.
+      <p style="font-size:12px;color:#666;margin-top:12px">
+        This tool explains link intent, not overall website trust.
       </p>
     `;
 
-    // ✅ OPEN POPUP
     overlay.classList.remove("hidden");
 
   } catch {
@@ -52,12 +49,10 @@ form.addEventListener("submit", async (e) => {
   btn.disabled = false;
 });
 
-// Close popup
 closeBtn.addEventListener("click", () => {
   overlay.classList.add("hidden");
 });
 
-// Close when clicking outside
 overlay.addEventListener("click", (e) => {
   if (e.target === overlay) {
     overlay.classList.add("hidden");
