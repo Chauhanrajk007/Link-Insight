@@ -1,6 +1,13 @@
 const form = document.getElementById("inspectForm");
 const btn = document.getElementById("inspectBtn");
+
+const overlay = document.getElementById("overlay");
+const popup = document.getElementById("popup");
 const result = document.getElementById("result");
+const closeBtn = document.getElementById("closePopup");
+
+// NEVER show popup on load
+overlay.classList.add("hidden");
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -30,13 +37,29 @@ form.addEventListener("submit", async (e) => {
       ${data.warnings.map(w => `<div>⚠ ${w}</div>`).join("")}
 
       <p style="font-size:12px;color:#666;margin-top:10px">
-        This tool explains link behavior, not website trust.
+        Explains what happens if you click the link.
       </p>
     `;
+
+    // ✅ OPEN POPUP
+    overlay.classList.remove("hidden");
+
   } catch {
     alert("Error inspecting link");
   }
 
   btn.textContent = "Inspect";
   btn.disabled = false;
+});
+
+// Close popup
+closeBtn.addEventListener("click", () => {
+  overlay.classList.add("hidden");
+});
+
+// Close when clicking outside
+overlay.addEventListener("click", (e) => {
+  if (e.target === overlay) {
+    overlay.classList.add("hidden");
+  }
 });
